@@ -44,7 +44,7 @@ func NewWaveletTree(ab []string, s []string) *WaveletTree {
 	}
 
 	if len(right_ab) > 1 {
-		lwt = NewWaveletTree(right_ab, right_s)
+		rwt = NewWaveletTree(right_ab, right_s)
 	}
 
 	var wt WaveletTree = WaveletTree{
@@ -56,9 +56,6 @@ func NewWaveletTree(ab []string, s []string) *WaveletTree {
 
 	return &wt
 }
-
-// func (wt *WaveletTree) iter() chan {
-// }
 
 func inSlice(x string, l []string) bool {
 	for _, y := range l {
@@ -85,6 +82,44 @@ func alphabet(s string) []string {
 	return r
 }
 
+func (wt *WaveletTree) Iter() chan string {
+
+	counters := make(map[*WaveletTree]uint)
+	ch := make(chan string, wt.data.Len())
+
+	go func() {
+		for i:= uint(0); i < wt.data.Len(); i++ {
+			wt.iterate(counters, ch)
+		}
+		close(ch)
+	}()
+
+	return ch
+}
+
+func (wt *WaveletTree) iterate(m map[*WaveletTree]uint, ch chan string) {
+
+	if len(wt.alphabet) > 2 {
+		if wt.data.Test(m[wt]) {
+			wt.right.iterate(m, ch)
+		} else {
+			if wt.left == nil {
+				ch <- wt.alphabet[0]
+			} else {
+				wt.left.iterate(m, ch)
+			}
+		}
+	} else {
+		if wt.data.Test(m[wt]) {
+			ch <- wt.alphabet[1]
+		} else {
+			ch <- wt.alphabet[0]
+		}
+	}
+
+	m[wt]++
+}
+
 func main() {
 	var str string = "Sing, Goddess, of the wrath of Achilles"
 
@@ -93,8 +128,10 @@ func main() {
 
 	wt := NewWaveletTree(ab, chars)
 
-	fmt.Printf("%q\n", wt)
+	var newstr string
 
-	// for i:= 0; i < wt.data.Len(); i++ {
-	// }
+	for x := range wt.Iter() {
+		newstr += x
+	}
+	fmt.Println(newstr)
 }
