@@ -1,7 +1,6 @@
-package main
+package wavelet
 
 import (
-	"fmt"
 	"github.com/willf/bitset"
 	"sort"
 	"strings"
@@ -120,18 +119,3 @@ func (wt *WaveletTree) iterate(m map[*WaveletTree]uint, ch chan string) {
 	m[wt]++
 }
 
-func main() {
-	var str string = "Sing, Goddess, of the wrath of Achilles"
-
-	ab := alphabet(str)
-	chars := strings.Split(str, "")
-
-	wt := NewWaveletTree(ab, chars)
-
-	var newstr string
-
-	for x := range wt.Iter() {
-		newstr += x
-	}
-	fmt.Println(newstr)
-}
