@@ -24,6 +24,25 @@ func TestBasic(t *testing.T) {
 	}
 }
 
+func TestMissingAlphaChars(t *testing.T) {
+	var str string = "It was a pleasure to burn."
+
+	ab := []string{"p", "l", "e", "a", "s", "u", "r", "e"}
+	chars := strings.Split(str, "")
+
+	wt := NewWaveletTree(ab, chars)
+
+	var newstr string
+
+	for x := range wt.Iter() {
+		newstr += x
+	}
+
+	if "asapleasureur" != newstr {
+		t.Error("Couldn't rebuild input!", str)
+	}
+}
+
 func BenchmarkNewWaveletTree(b *testing.B) {
 	var str string = "As Gregor Samsa awoke one morning from uneasy dreams he found himself transformed in his bed into a monstrous vermin."
 
