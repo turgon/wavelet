@@ -7,11 +7,11 @@ import (
 )
 
 type WaveletTree struct {
-	leftAlphabet []string
+	leftAlphabet  []string
 	rightAlphabet []string
-	left     *WaveletTree
-	right    *WaveletTree
-	data     *bitset.BitSet
+	left          *WaveletTree
+	right         *WaveletTree
+	data          *bitset.BitSet
 }
 
 func NewWaveletTree(ab []string, s []string) *WaveletTree {
@@ -48,11 +48,11 @@ func NewWaveletTree(ab []string, s []string) *WaveletTree {
 	}
 
 	var wt WaveletTree = WaveletTree{
-		leftAlphabet: left_ab,
+		leftAlphabet:  left_ab,
 		rightAlphabet: right_ab,
-		left:     lwt,
-		right:    rwt,
-		data:     &d,
+		left:          lwt,
+		right:         rwt,
+		data:          &d,
 	}
 
 	return &wt
@@ -113,7 +113,7 @@ func (wt *WaveletTree) Iter() chan string {
 	ch := make(chan string, wt.data.Len())
 
 	go func() {
-		for i:= uint(0); i < wt.data.Len(); i++ {
+		for i := uint(0); i < wt.data.Len(); i++ {
 			wt.iterate(counters, ch)
 		}
 		close(ch)
@@ -140,4 +140,3 @@ func (wt *WaveletTree) iterate(m map[*WaveletTree]uint, ch chan string) {
 
 	m[wt]++
 }
-

@@ -1,8 +1,8 @@
 package wavelet
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 func TestBasic(t *testing.T) {
