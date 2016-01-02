@@ -1,3 +1,7 @@
+// Package wavelet provides the Wavelet Tree, a succinct data
+// structure. Wavelet Trees allow fast Rank and Select operations
+// against strings with arbitrarily large alphabets by converting the
+// input string into a form of binary tree.
 package wavelet
 
 import (
@@ -105,6 +109,45 @@ func (wt *WaveletTree) Rank(x uint, q string) uint {
 	}
 
 	return tot
+}
+
+// Select finds the xth occurrence of string q and returns its
+// location.
+func (wt *WaveletTree) Select(x uint, q string) uint {
+
+	var isLeft bool = false
+
+	if inSlice(q, wt.leftAlphabet) {
+		isLeft = true
+		if nil != wt.left {
+			x = wt.left.Select(x, q)
+		}
+	} else {
+		isLeft = false
+		if nil != wt.right {
+			x = wt.right.Select(x, q)
+		}
+	}
+
+	// find the local position of the desired q string,
+	// then use it to replace x in the parent call.
+	// when the root node is hit, x is now the overall position.
+
+	var ctr, pos uint
+
+	for pos = 0; pos < wt.data.Len() && ctr < x; pos++ {
+
+		bitActive := wt.data.Test(pos)
+
+		if isLeft && !bitActive {
+			ctr++
+		}
+		if !isLeft && bitActive {
+			ctr++
+		}
+	}
+
+	return pos
 }
 
 func (wt *WaveletTree) Iter() chan string {

@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestBasic(t *testing.T) {
+func TestRebuild(t *testing.T) {
 	var str string = "Sing, Goddess, of the wrath of Achilles"
 
 	ab := alphabet(str)
@@ -65,6 +65,29 @@ func TestRank(t *testing.T) {
 	verify(0, "l", 0)
 
 	verify(uint(len(str)), "r", 7)
+}
+
+func TestSelect(t *testing.T) {
+	var str = "\"Where's Papa going with that axe?\" said Fern to her mother as they were setting the table for breakfast."
+
+	ab := alphabet(str)
+	chars := strings.Split(str, "")
+
+	wt := NewWaveletTree(ab, chars)
+
+	var verify = func(x uint, q string, exp uint) {
+		if r := wt.Select(x, q); r != exp {
+			t.Errorf("Select reported wrong result! %v != %v", r, exp)
+		}
+	}
+
+	verify(1, "\"", 1)
+	verify(1, "W", 2)
+	verify(1, "h", 3)
+	verify(1, "e", 4)
+	verify(1, "r", 5)
+	verify(2, "e", 6)
+
 }
 
 func BenchmarkNewWaveletTree(b *testing.B) {
