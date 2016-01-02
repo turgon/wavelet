@@ -7,7 +7,8 @@ import (
 )
 
 type WaveletTree struct {
-	alphabet []string
+	leftAlphabet []string
+	rightAlphabet []string
 	left     *WaveletTree
 	right    *WaveletTree
 	data     *bitset.BitSet
@@ -47,7 +48,8 @@ func NewWaveletTree(ab []string, s []string) *WaveletTree {
 	}
 
 	var wt WaveletTree = WaveletTree{
-		alphabet: ab,
+		leftAlphabet: left_ab,
+		rightAlphabet: right_ab,
 		left:     lwt,
 		right:    rwt,
 		data:     &d,
@@ -81,6 +83,30 @@ func alphabet(s string) []string {
 	return r
 }
 
+func (wt *WaveletTree) Rank(x uint, q string) uint {
+	var tot uint
+
+	for i := uint(0); i < x; i++ {
+		if wt.data.Test(i) {
+			tot++
+		}
+	}
+
+	if inSlice(q, wt.leftAlphabet) {
+		tot = x - tot
+
+		if nil != wt.left {
+			return wt.left.Rank(tot, q)
+		}
+	} else {
+		if nil != wt.right {
+			return wt.right.Rank(tot, q)
+		}
+	}
+
+	return tot
+}
+
 func (wt *WaveletTree) Iter() chan string {
 
 	counters := make(map[*WaveletTree]uint)
@@ -98,21 +124,17 @@ func (wt *WaveletTree) Iter() chan string {
 
 func (wt *WaveletTree) iterate(m map[*WaveletTree]uint, ch chan string) {
 
-	if len(wt.alphabet) > 2 {
-		if wt.data.Test(m[wt]) {
+	if wt.data.Test(m[wt]) {
+		if nil != wt.right {
 			wt.right.iterate(m, ch)
 		} else {
-			if wt.left == nil {
-				ch <- wt.alphabet[0]
-			} else {
-				wt.left.iterate(m, ch)
-			}
+			ch <- wt.rightAlphabet[0]
 		}
 	} else {
-		if wt.data.Test(m[wt]) {
-			ch <- wt.alphabet[1]
+		if nil != wt.left {
+			wt.left.iterate(m, ch)
 		} else {
-			ch <- wt.alphabet[0]
+			ch <- wt.leftAlphabet[0]
 		}
 	}
 

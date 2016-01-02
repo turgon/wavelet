@@ -43,6 +43,30 @@ func TestMissingAlphaChars(t *testing.T) {
 	}
 }
 
+func TestRank(t *testing.T) {
+	var str string = "I’ll make my report as if I told a story, for I was taught as a child on my homeworld that Truth is a matter of the imagination."
+
+	ab := alphabet(str)
+	chars := strings.Split(str, "")
+
+	wt := NewWaveletTree(ab, chars)
+
+	var verify = func(x uint, q string, exp uint) {
+		if r := wt.Rank(x, q); r != exp {
+			t.Errorf("Rank reported wrong result! %v != %v", r, exp)
+		}
+	}
+
+	verify(1, "I", 1)
+	verify(2, "'", 1)
+	verify(3, "l", 1)
+	verify(4, "l", 2)
+
+	verify(0, "l", 0)
+
+	verify(uint(len(str)), "r", 7)
+}
+
 func BenchmarkNewWaveletTree(b *testing.B) {
 	var str string = "As Gregor Samsa awoke one morning from uneasy dreams he found himself transformed in his bed into a monstrous vermin."
 
