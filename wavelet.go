@@ -6,8 +6,6 @@ package wavelet
 
 import (
 	"github.com/willf/bitset"
-	"sort"
-	"strings"
 )
 
 type WaveletTree struct {
@@ -18,6 +16,14 @@ type WaveletTree struct {
 	data          *bitset.BitSet
 }
 
+// NewWaveletTree returns a pointer to a new WaveletTree given an
+// alphabet and string to encode. Both the alphabet and input
+// should be slices of strings. The alphabet should be a slice of
+// distinct symbols used in the input text, and the input text
+// should be an in-order sequence of the alphabet's symbols.
+//
+// Note: the tree will ignore any symbols in the input that are not
+// found in the given alphabet.
 func NewWaveletTree(ab []string, s []string) *WaveletTree {
 
 	var left_s, right_s []string
@@ -62,6 +68,8 @@ func NewWaveletTree(ab []string, s []string) *WaveletTree {
 	return &wt
 }
 
+// inSlice returns true/false depending on whether the symbol x is
+// in the set of symbols l.
 func inSlice(x string, l []string) bool {
 	for _, y := range l {
 		if x == y {
@@ -71,22 +79,15 @@ func inSlice(x string, l []string) bool {
 	return false
 }
 
-func alphabet(s string) []string {
-	var r []string
-	var chars []string = strings.Split(s, "")
-
-	sort.Strings(chars)
-
-	r = append(r, chars[0])
-
-	for _, x := range chars {
-		if x != r[len(r)-1] {
-			r = append(r, x)
-		}
-	}
-	return r
-}
-
+// Rank returns the number of occurrences of the symbol q within the
+// first x symbols.
+//
+// Rank is a sort of anti-Select operation; given a symbol q and a
+// position boundary, Rank tells you how many times the symbol appears.
+//
+// It works by counting up the set bits in the WT's data, then using
+// that count to recurse into the appropriate child WT. The count at
+// the leaf node is the final answer.
 func (wt *WaveletTree) Rank(x uint, q string) uint {
 	var tot uint
 
@@ -111,8 +112,15 @@ func (wt *WaveletTree) Rank(x uint, q string) uint {
 	return tot
 }
 
-// Select finds the xth occurrence of string q and returns its
+// Select finds the xth occurrence of symbol q and returns its
 // location.
+//
+// Select is a sort of anti-Rank operation; given a symbol and a rank,
+// Select finds the position of that rank.
+//
+// It works by recursing down to the right leaf node, then using the
+// location of the xth occurrence of symbol q there to limit search
+// in its parent WT.
 func (wt *WaveletTree) Select(x uint, q string) uint {
 
 	var isLeft bool = false
@@ -150,7 +158,11 @@ func (wt *WaveletTree) Select(x uint, q string) uint {
 	return pos
 }
 
-func (wt *WaveletTree) Iter() chan string {
+// Iter returns an out-channel that will contain symbols from the
+// input text in order. It's useful in conjunction with Go's range
+// operation. You can think of this as a way to "decompress" the input
+// back into slice-of-string form.
+func (wt *WaveletTree) Iter() <-chan string {
 
 	counters := make(map[*WaveletTree]uint)
 	ch := make(chan string, wt.data.Len())
@@ -165,6 +177,9 @@ func (wt *WaveletTree) Iter() chan string {
 	return ch
 }
 
+// iterate is a helper function for use with Iter(). It walks through
+// the symbols in the root WT and recurses into the child nodes,
+// pulling symbols from the leaves.
 func (wt *WaveletTree) iterate(m map[*WaveletTree]uint, ch chan string) {
 
 	if wt.data.Test(m[wt]) {

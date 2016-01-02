@@ -1,6 +1,7 @@
 package wavelet
 
 import (
+	"sort"
 	"strings"
 	"testing"
 )
@@ -8,7 +9,7 @@ import (
 func TestRebuild(t *testing.T) {
 	var str string = "Sing, Goddess, of the wrath of Achilles"
 
-	ab := alphabet(str)
+	ab := alphabetize(str)
 	chars := strings.Split(str, "")
 
 	wt := NewWaveletTree(ab, chars)
@@ -46,7 +47,7 @@ func TestMissingAlphaChars(t *testing.T) {
 func TestRank(t *testing.T) {
 	var str string = "I’ll make my report as if I told a story, for I was taught as a child on my homeworld that Truth is a matter of the imagination."
 
-	ab := alphabet(str)
+	ab := alphabetize(str)
 	chars := strings.Split(str, "")
 
 	wt := NewWaveletTree(ab, chars)
@@ -70,7 +71,7 @@ func TestRank(t *testing.T) {
 func TestSelect(t *testing.T) {
 	var str = "\"Where's Papa going with that axe?\" said Fern to her mother as they were setting the table for breakfast."
 
-	ab := alphabet(str)
+	ab := alphabetize(str)
 	chars := strings.Split(str, "")
 
 	wt := NewWaveletTree(ab, chars)
@@ -93,7 +94,7 @@ func TestSelect(t *testing.T) {
 func BenchmarkNewWaveletTree(b *testing.B) {
 	var str string = "As Gregor Samsa awoke one morning from uneasy dreams he found himself transformed in his bed into a monstrous vermin."
 
-	ab := alphabet(str)
+	ab := alphabetize(str)
 	chars := strings.Split(str, "")
 
 	for i := 0; i < b.N; i++ {
@@ -104,7 +105,7 @@ func BenchmarkNewWaveletTree(b *testing.B) {
 func BenchmarkIter(b *testing.B) {
 	var str string = "Call me Ishmael."
 
-	ab := alphabet(str)
+	ab := alphabetize(str)
 	chars := strings.Split(str, "")
 
 	wt := NewWaveletTree(ab, chars)
@@ -116,3 +117,22 @@ func BenchmarkIter(b *testing.B) {
 		}
 	}
 }
+
+// alphabetize is a helper function to take a string and return
+// all the distinct symbols it uses.
+func alphabetize(s string) []string {
+	var r []string
+	var chars []string = strings.Split(s, "")
+
+	sort.Strings(chars)
+
+	r = append(r, chars[0])
+
+	for _, x := range chars {
+		if x != r[len(r)-1] {
+			r = append(r, x)
+		}
+	}
+	return r
+}
+
