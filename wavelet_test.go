@@ -1,6 +1,7 @@
 package wavelet
 
 import (
+	"math"
 	"sort"
 	"strings"
 	"testing"
@@ -91,6 +92,27 @@ func TestSelect(t *testing.T) {
 
 }
 
+func TestSize(t *testing.T) {
+	var str = "Far out in the uncharted backwaters of the unfashionable end of the western spiral arm of the Galaxy lies a small unregarded yellow sun."
+
+	ab := alphabetize(str)
+	chars := strings.Split(str, "")
+
+	wt := NewWaveletTree(ab, chars)
+
+	upper := uint(math.Ceil(math.Log2(float64(len(ab)))) * float64(len(str)))
+	lower := uint(math.Floor(math.Log2(float64(len(ab)))) * float64(len(str)))
+
+	size := wt.Size()
+
+	if size > upper {
+		t.Errorf("WaveletTree size greater than upper bound: %v > %v\n", size, upper)
+	}
+	if size < lower {
+		t.Errorf("WaveletTree size less than lower bound: %v < %v\n", size, lower)
+	}
+}
+
 func BenchmarkNewWaveletTree(b *testing.B) {
 	var str string = "As Gregor Samsa awoke one morning from uneasy dreams he found himself transformed in his bed into a monstrous vermin."
 
@@ -135,4 +157,3 @@ func alphabetize(s string) []string {
 	}
 	return r
 }
-

@@ -198,3 +198,20 @@ func (wt *WaveletTree) iterate(m map[*WaveletTree]uint, ch chan string) {
 
 	m[wt]++
 }
+
+// Size returns the number of bits of the bitsets used to encode the
+// input text. It does not include pointer overhead or the slices of
+// alphabet symbols.
+func (wt *WaveletTree) Size() uint {
+	var l, r uint
+
+	if wt.left != nil {
+		l = wt.left.Size()
+	}
+
+	if wt.right != nil {
+		r = wt.right.Size()
+	}
+
+	return wt.data.Len() + l + r
+}
