@@ -1,5 +1,7 @@
+// Package bitfield provides a low level data structure for bag-of-bits.
 package bitfield
 
+// BitField uses a slice of bytes to store the bag-of-bits.
 type BitField struct {
 	Data []byte
 	length uint
@@ -18,18 +20,22 @@ func NewBitField(bits uint) BitField {
 	}
 }
 
+// Set sets the bit at position to one.
 func (bf BitField) Set(position uint) {
 	bf.Data[position / 8] |= (1 << (7 - position % 8))
 }
 
+// Unset sets the bit at position to zero.
 func (bf BitField) Unset(position uint) {
 	bf.Data[position / 8] &^= (1 << (7 - position % 8))
 }
 
+// Test returns true if the bit at position is set.
 func (bf BitField) Test(position uint) bool {
 	return (bf.Data[position / 8] & (1 << (7 - position % 8))) != 0
 }
 
+// Len returns the number of bits in the bitfield.
 func (bf BitField) Len() uint {
 	return bf.length
 }
