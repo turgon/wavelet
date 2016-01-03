@@ -5,7 +5,7 @@
 package wavelet
 
 import (
-	"github.com/willf/bitset"
+	"github.com/turgon/wavelet/bitfield"
 )
 
 type WaveletTree struct {
@@ -13,7 +13,7 @@ type WaveletTree struct {
 	rightAlphabet []string
 	left          *WaveletTree
 	right         *WaveletTree
-	data          *bitset.BitSet
+	data          bitfield.BitField
 }
 
 // NewWaveletTree returns a pointer to a new WaveletTree given an
@@ -32,21 +32,23 @@ func NewWaveletTree(ab []string, s []string) *WaveletTree {
 	left_ab := ab[:len(ab)/2]
 	right_ab := ab[len(ab)/2:]
 
-	var d bitset.BitSet
+	var d bitfield.BitField = bitfield.NewBitField(uint(len(s)))
 	var ctr uint = 0
 
 	for _, x := range s {
 		switch {
 		case inSlice(x, left_ab):
 			left_s = append(left_s, x)
-			d.Set(ctr)
-			d.Clear(ctr)
 			ctr++
 		case inSlice(x, right_ab):
 			right_s = append(right_s, x)
 			d.Set(ctr)
 			ctr++
 		}
+	}
+
+	if ctr < uint(len(s)) {
+		d = d.Resize(ctr)
 	}
 
 	if len(left_ab) > 1 {
@@ -62,7 +64,7 @@ func NewWaveletTree(ab []string, s []string) *WaveletTree {
 		rightAlphabet: right_ab,
 		left:          lwt,
 		right:         rwt,
-		data:          &d,
+		data:          d,
 	}
 
 	return &wt
@@ -91,7 +93,7 @@ func inSlice(x string, l []string) bool {
 func (wt *WaveletTree) Rank(x uint, q string) uint {
 	var tot uint
 
-	for i := uint(0); i < x; i++ {
+	for i := uint(0); i < x && i < wt.data.Len(); i++ {
 		if wt.data.Test(i) {
 			tot++
 		}
