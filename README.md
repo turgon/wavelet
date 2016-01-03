@@ -6,7 +6,8 @@ I've implemented a [Wavelet Tree][1] data structure. For a great introduction to
 
 ## Status
 
-Still very much a work in progress!
+The Wavelet Tree structure is fully functional and well-tested, but very no-frills. I'd like to spend time implementing the RRR structure as well, which can provide O(1) Rank and Select operations. The current implementation of Rank and Select in the Wavelet Tree is O(s * log s * n log n) for an n-symbol input with alphabet size of s. Pretty bad! Moving to RRR should make these operations closer to O(log n).
+
 
 
 [1]: https://en.wikipedia.org/wiki/Wavelet_Tree
