@@ -39,3 +39,4 @@ func main() {
 
 [1]: https://en.wikipedia.org/wiki/Wavelet_Tree
 [2]: http://alexbowe.com/wavelet-trees/
+[3]: examples
