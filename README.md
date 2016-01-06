@@ -36,6 +36,11 @@ func main() {
 }
 ```
 
+## Roadmap
+
+* Use go-fuzz to do fuzzy testing
+* Implement RRR
+
 
 [1]: https://en.wikipedia.org/wiki/Wavelet_Tree
 [2]: http://alexbowe.com/wavelet-trees/
