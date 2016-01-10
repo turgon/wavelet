@@ -35,6 +35,8 @@ func TestRank(t *testing.T) {
 			t.Fatalf("%v\n", r.Rank(i))
 		}
 	}
+	// Now test an edge case
+	r.Rank(8*5 + 1)
 }
 
 func BenchmarkRank(b *testing.B) {
