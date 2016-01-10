@@ -38,6 +38,10 @@ func NewRRR(bf *bitfield.BitField) RRR {
 		make([]uint32, superblocks, superblocks),
 	}
 
+	if bf.Len() == 0 {
+		return r
+	}
+
 	var tot uint32
 	for i := uint(0); i < superblocks-1; i++ {
 		for j := uint(0); j < superblockSize; j++ {
@@ -58,8 +62,14 @@ func (r *RRR) Rank(x uint) (tot uint32) {
 	// superblock prior to x,
 	// plus the rank of this block up to x.
 
-	if x >= r.bf.Len() {
-		x = r.bf.Len() - 1
+	length := r.bf.Len()
+
+	if x >= length {
+		x = length - 1
+	}
+
+	if length == 0 {
+		return 0
 	}
 
 	block := x / blockSize

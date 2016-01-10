@@ -24,6 +24,12 @@ func TestNewRRR(t *testing.T) {
 	// t.Errorf("%v\n", r)
 }
 
+func TestNewRRREmptyField(t *testing.T) {
+	bf := bitfield.NewBitField(0)
+	r := NewRRR(&bf)
+	r.Rank(0)
+}
+
 func TestRank(t *testing.T) {
 	bf := bitfield.NewBitField(8 * 5)
 	for i := uint(0); i < 8*5; i++ {
