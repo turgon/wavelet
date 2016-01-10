@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewRRR(t *testing.T) {
-	bf := bitfield.NewBitField(41)
+	bf := bitfield.NewBitField(137)
 
 	bf.Set(2)
 	bf.Set(10)
@@ -37,7 +37,7 @@ func TestRank(t *testing.T) {
 	}
 	r := NewRRR(&bf)
 	for i := uint(0); i < 8*5; i++ {
-		if r.Rank(i) != uint32(i) {
+		if r.Rank(i) != uint64(i) {
 			t.Fatalf("%v\n", r.Rank(i))
 		}
 	}
@@ -47,12 +47,14 @@ func TestRank(t *testing.T) {
 
 func BenchmarkRank(b *testing.B) {
 
-	rs := make([]RRR, 100, 100)
+	rsSize := 1000
 
-	for i := 0; i < 100; i++ {
+	rs := make([]RRR, rsSize)
+
+	for i := 0; i < rsSize; i++ {
 		var bf bitfield.BitField
 
-		bits := 512 + rand.Intn(512)
+		bits := 2 + rand.Intn(8190)
 
 		bf = bitfield.NewBitField(uint(bits))
 		for j := rand.Intn(bits/2); j >= 0; j-- {
@@ -64,7 +66,7 @@ func BenchmarkRank(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		var r RRR
-		r = rs[i % 100]
+		r = rs[i % rsSize]
 
 		r.Rank(r.bf.Len()-1)
 	}
@@ -81,7 +83,7 @@ func TestPopcountBye(t *testing.T) {
 	}
 }
 
-func naivePopCount(x byte) (c uint32) {
+func naivePopCount(x byte) (c uint64) {
 	for i := 0; i < 8; i++ {
 		if x&1 > 0 {
 			c++

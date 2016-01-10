@@ -9,15 +9,14 @@ import (
 // so a superblock is 32 bits.
 
 const blockSize = 8      // bits
-const superblockSize = 4 // blocks
+const superblockSize = 16 // blocks
 
 type RRR struct {
 	bf          *bitfield.BitField
 	blocks      uint
 	superblocks uint
 
-	// this places a max length of 4294967296 symbols on the doc.
-	superRanks []uint32
+	superRanks []uint64
 }
 
 func NewRRR(bf *bitfield.BitField) RRR {
@@ -35,14 +34,14 @@ func NewRRR(bf *bitfield.BitField) RRR {
 		bf,
 		blocks,
 		superblocks,
-		make([]uint32, superblocks, superblocks),
+		make([]uint64, superblocks, superblocks),
 	}
 
 	if bf.Len() == 0 {
 		return r
 	}
 
-	var tot uint32
+	var tot uint64
 	for i := uint(0); i < superblocks-1; i++ {
 		for j := uint(0); j < superblockSize; j++ {
 			loc := i * superblockSize + j
@@ -56,7 +55,7 @@ func NewRRR(bf *bitfield.BitField) RRR {
 	return r
 }
 
-func (r *RRR) Rank(x uint) (tot uint32) {
+func (r *RRR) Rank(x uint) (tot uint64) {
 	// I need to return the sum of ranks for all prior superblocks
 	// plus the sum of the ranks for all blocks within this
 	// superblock prior to x,
@@ -91,7 +90,7 @@ func (r *RRR) Rank(x uint) (tot uint32) {
 	return tot
 }
 
-func popcountByte(z byte) uint32 {
+func popcountByte(z byte) uint64 {
 
 	b0 := z & 85
 	b1 := (z >> 1) & 85
@@ -106,5 +105,5 @@ func popcountByte(z byte) uint32 {
 	f0 := e & 15
 	f4 := (e >> 4) & 15
 
-	return uint32(f0 + f4)
+	return uint64(f0 + f4)
 }
