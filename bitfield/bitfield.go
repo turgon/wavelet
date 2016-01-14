@@ -48,6 +48,10 @@ func (bf BitField) Resize(bits uint) BitField {
 
 	copy(nbf.Data, bf.Data)
 
+	if nbf.Len() % 8 == 0 {
+		return nbf
+	}
+
 	ctr := uint(0)
 	for i := nbf.Len(); i < bf.Len() && ctr < (8 - (nbf.Len() % 8)); i++ {
 		nbf.Unset(i)

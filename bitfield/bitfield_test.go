@@ -2,7 +2,6 @@ package bitfield
 
 import (
 	"testing"
-	"fmt"
 )
 
 func TestNewBitField(t *testing.T) {
@@ -49,14 +48,15 @@ func TestBitFieldUnset(t *testing.T) {
 }
 
 func TestBitFieldSet(t *testing.T) {
-	bf := NewBitField(16)
 
+	bf := NewBitField(16)
 	for i := uint(0); i < 16; i++ {
 		bf.Set(i)
-		for _, x := range bf.Data {
-			fmt.Printf("%8.8b", x)
+	}
+	for i := uint(0); i < 16; i++ {
+		if !bf.Test(i) {
+			t.Errorf("BitField Set or Test failed!")
 		}
-		fmt.Printf(" %v\n", bf)
 	}
 
 	bf = NewBitField(17)
@@ -85,15 +85,6 @@ func TestBitFieldSet(t *testing.T) {
 	if bf.Data[2] != 128 {
 		t.Errorf("BitField Set wrong value!")
 	}
-
-	for i := uint(0); i < 17; i++ {
-		bf.Set(i)
-		for _, x := range bf.Data {
-			fmt.Printf("%8.8b", x)
-		}
-		fmt.Printf(" %v\n", bf)
-	}
-
 
 }
 
@@ -130,5 +121,19 @@ func TestResize(t *testing.T) {
 	bf = bf.Resize(1)
 	if bf.Data[0] != 128 {
 		t.Errorf("Resize didn't clear bits!")
+	}
+
+	bf = NewBitField(9)
+	bf.Set(1)
+	bf = bf.Resize(8)
+	if len(bf.Data) != 1 {
+		t.Errorf("Resize to 8 has wrong data size!")
+	}
+
+	bf = NewBitField(1)
+	bf.Set(1)
+	bf = bf.Resize(0)
+	if len(bf.Data) != 0 {
+		t.Errorf("Resize to zero still has data!")
 	}
 }
