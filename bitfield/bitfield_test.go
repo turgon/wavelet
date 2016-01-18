@@ -36,6 +36,9 @@ func TestBitFieldTest(t *testing.T) {
 	if bf.Test(16) {
 		t.Errorf("BitField Test returned wrong value!")
 	}
+	if bf.Test(19) {
+		t.Errorf("BitField Test returned wrong value!")
+	}
 }
 
 func TestBitFieldUnset(t *testing.T) {
