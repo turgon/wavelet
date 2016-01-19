@@ -8,12 +8,12 @@ func TestNewBitField(t *testing.T) {
 	var bf BitField
 
 	bf = NewBitField(16)
-	if len(bf.Data) != 2 {
+	if len(bf.Data) != 1 {
 		t.Errorf("NewBitField returned wrongly sized field: %v", len(bf.Data))
 	}
 
 	bf = NewBitField(17)
-	if len(bf.Data) != 3 {
+	if len(bf.Data) != 2 {
 		t.Errorf("NewBitField returned wrongly sized field: %v", len(bf.Data))
 	}
 }
@@ -65,27 +65,27 @@ func TestBitFieldSet(t *testing.T) {
 	bf = NewBitField(17)
 
 	bf.Set(0)
-	if bf.Data[0] != 128 {
+	if bf.Data[0] != 32768 {
 		t.Errorf("BitField Set wrong value!")
 	}
 
 	bf.Set(1)
-	if bf.Data[0] != 192 {
+	if bf.Data[0] != 49152 {
 		t.Errorf("BitField Set wrong value!")
 	}
 
 	bf.Set(8)
-	if bf.Data[1] != 128 {
+	if bf.Data[0] != 49280 {
 		t.Errorf("BitField Set wrong value!")
 	}
 
 	bf.Set(9)
-	if bf.Data[1] != 192 {
+	if bf.Data[0] != 49344 {
 		t.Errorf("BitField Set wrong value!")
 	}
 
 	bf.Set(16)
-	if bf.Data[2] != 128 {
+	if bf.Data[1] != 32768 {
 		t.Errorf("BitField Set wrong value!")
 	}
 
@@ -122,7 +122,7 @@ func TestResize(t *testing.T) {
 		bf.Set(i)
 	}
 	bf = bf.Resize(1)
-	if bf.Data[0] != 128 {
+	if bf.Data[0] != 32768 {
 		t.Errorf("Resize didn't clear bits!")
 	}
 
