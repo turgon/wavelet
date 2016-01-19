@@ -11,12 +11,23 @@ import (
 const blockSize = 8      // bits
 const superblockSize = 16 // blocks
 
+type RRRPair struct {
+	// only 3 bits needed here
+	Class uint8
+
+	// 8 choose 4 = 70 is the max, requiring 7 bits
+	Offset uint8
+}
+
 type RRR struct {
 	bf          *bitfield.BitField
 	blocks      uint
 	superblocks uint
 
 	superRanks []uint64
+
+	global map[uint8][]byte
+	pairs []RRRPair
 }
 
 func NewRRR(bf *bitfield.BitField) RRR {
@@ -30,15 +41,35 @@ func NewRRR(bf *bitfield.BitField) RRR {
 		superblocks++
 	}
 
+	globals := make(map[uint8][]byte)
+
 	r := RRR{
 		bf,
 		blocks,
 		superblocks,
 		make([]uint64, superblocks, superblocks),
+		globals,
+		make([]RRRPair, blocks),
 	}
 
 	if bf.Len() == 0 {
 		return r
+	}
+
+	popMap := make(map[byte]uint64)
+	popCnt := make(map[uint64]uint64)
+
+	// Build popMap, then invert it into globals
+	for _, b := range bf.Data {
+		popMap[b] = popcountByte(b)
+		if _, ok := 
+			popCnt[popMap[b]]++
+	}
+	for pc, cnt := range popCnt {
+		globals[uint8(pc)] = make([]byte, cnt)
+	}
+	for b, pc := range popMap {
+		globals[uint8(pc)] = append(globals[uint8(pc)], b)
 	}
 
 	var tot uint64
@@ -46,7 +77,7 @@ func NewRRR(bf *bitfield.BitField) RRR {
 		for j := uint(0); j < superblockSize; j++ {
 			loc := i * superblockSize + j
 			if loc < uint(len(bf.Data)) {
-				tot += popcountByte(bf.Data[loc])
+				tot += popMap[bf.Data[loc]]
 			}
 		}
 		r.superRanks[i+1] = tot

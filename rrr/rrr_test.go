@@ -21,7 +21,7 @@ func TestNewRRR(t *testing.T) {
 		}
 	}
 
-	// t.Errorf("%v\n", r)
+	t.Errorf("%v\n", r)
 }
 
 func TestNewRRREmptyField(t *testing.T) {
