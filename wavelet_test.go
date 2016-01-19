@@ -45,6 +45,15 @@ func TestMissingAlphaChars(t *testing.T) {
 	}
 }
 
+func TestResize(t *testing.T) {
+
+	ab := []string{"a"}
+	chars := []string{"b", "b", "b"}
+
+	wt := NewWaveletTree(ab, chars)
+	wt.Rank(3, "b")
+}
+
 func TestRank(t *testing.T) {
 	var str string = "I’ll make my report as if I told a story, for I was taught as a child on my homeworld that Truth is a matter of the imagination."
 
@@ -56,6 +65,7 @@ func TestRank(t *testing.T) {
 	var verify = func(x uint, q string, exp uint) {
 		if r := wt.Rank(x, q); r != exp {
 			t.Errorf("Rank reported wrong result! %v != %v", r, exp)
+			t.Errorf("wt = %v", wt)
 		}
 	}
 
@@ -67,29 +77,11 @@ func TestRank(t *testing.T) {
 	verify(0, "l", 0)
 
 	verify(uint(len(str)), "r", 7)
-}
 
-func TestSelect(t *testing.T) {
-	var str = "\"Where's Papa going with that axe?\" said Fern to her mother as they were setting the table for breakfast."
-
-	ab := alphabetize(str)
-	chars := strings.Split(str, "")
-
-	wt := NewWaveletTree(ab, chars)
-
-	var verify = func(x uint, q string, exp uint) {
-		if r := wt.Select(x, q); r != exp {
-			t.Errorf("Select reported wrong result! %v != %v", r, exp)
-		}
-	}
-
-	verify(1, "\"", 1)
-	verify(1, "W", 2)
-	verify(1, "h", 3)
-	verify(1, "e", 4)
-	verify(1, "r", 5)
-	verify(2, "e", 6)
-
+	ab = alphabetize("ab")
+	chars = strings.Split("c000000", "")
+	wt = NewWaveletTree(ab, chars)
+	verify(7, "a", 0)
 }
 
 func TestSize(t *testing.T) {

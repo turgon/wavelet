@@ -1,38 +1,41 @@
 // Package bitfield provides a low level data structure for bag-of-bits.
 package bitfield
 
+type segment uint16
+const segmentSize uint = 16
+
 // BitField uses a slice of bytes to store the bag-of-bits.
 type BitField struct {
-	Data []byte
+	Data []segment
 	length uint
 }
 
 // NewBitField returns a BitField sized to the desired number of bits.
 func NewBitField(bits uint) BitField {
-	bytes := bits / 8
-	if bits % 8 > 0 {
+	bytes := bits / segmentSize
+	if bits % segmentSize > 0 {
 		bytes++
 	}
 
 	return BitField{
-		make([]byte, bytes),
+		make([]segment, bytes),
 		bits,
 	}
 }
 
 // Set sets the bit at position to one.
 func (bf BitField) Set(position uint) {
-	bf.Data[position / 8] |= (1 << (7 - position % 8))
+	bf.Data[position / segmentSize] |= (1 << ((segmentSize - 1) - position % segmentSize))
 }
 
 // Unset sets the bit at position to zero.
 func (bf BitField) Unset(position uint) {
-	bf.Data[position / 8] &^= (1 << (7 - position % 8))
+	bf.Data[position / segmentSize] &^= (1 << ((segmentSize - 1) - position % segmentSize))
 }
 
 // Test returns true if the bit at position is set.
 func (bf BitField) Test(position uint) bool {
-	return (bf.Data[position / 8] & (1 << (7 - position % 8))) != 0
+	return (bf.Data[position / segmentSize] & (1 << ((segmentSize - 1) - position % segmentSize))) != 0
 }
 
 // Len returns the number of bits in the bitfield.
@@ -48,8 +51,12 @@ func (bf BitField) Resize(bits uint) BitField {
 
 	copy(nbf.Data, bf.Data)
 
+	if nbf.Len() % segmentSize == 0 {
+		return nbf
+	}
+
 	ctr := uint(0)
-	for i := nbf.Len(); i < bf.Len() && ctr < (8 - (nbf.Len() % 8)); i++ {
+	for i := nbf.Len(); i < bf.Len() && ctr < (segmentSize - (nbf.Len() % segmentSize)); i++ {
 		nbf.Unset(i)
 		ctr++
 	}
