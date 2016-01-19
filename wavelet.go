@@ -93,71 +93,31 @@ func inSlice(x string, l []string) bool {
 func (wt *WaveletTree) Rank(x uint, q string) uint {
 	var tot uint
 
+	if x > wt.data.Len() {
+		x = wt.data.Len()
+	}
+
+	// this calculation is slow because it's O(n)
+	// not to mention that this is the most naive way to popcount
 	for i := uint(0); i < x && i < wt.data.Len(); i++ {
 		if wt.data.Test(i) {
 			tot++
 		}
 	}
 
+	// this recursion is slow because inSlice is O(n)
 	if inSlice(q, wt.leftAlphabet) {
 		tot = x - tot
-
 		if nil != wt.left {
 			return wt.left.Rank(tot, q)
 		}
-	} else {
+	} else if inSlice(q, wt.rightAlphabet) {
 		if nil != wt.right {
 			return wt.right.Rank(tot, q)
 		}
 	}
 
 	return tot
-}
-
-// Select finds the xth occurrence of symbol q and returns its
-// location.
-//
-// Select is a sort of anti-Rank operation; given a symbol and a rank,
-// Select finds the position of that rank.
-//
-// It works by recursing down to the right leaf node, then using the
-// location of the xth occurrence of symbol q there to limit search
-// in its parent WT.
-func (wt *WaveletTree) Select(x uint, q string) uint {
-
-	var isLeft bool = false
-
-	if inSlice(q, wt.leftAlphabet) {
-		isLeft = true
-		if nil != wt.left {
-			x = wt.left.Select(x, q)
-		}
-	} else {
-		isLeft = false
-		if nil != wt.right {
-			x = wt.right.Select(x, q)
-		}
-	}
-
-	// find the local position of the desired q string,
-	// then use it to replace x in the parent call.
-	// when the root node is hit, x is now the overall position.
-
-	var ctr, pos uint
-
-	for pos = 0; pos < wt.data.Len() && ctr < x; pos++ {
-
-		bitActive := wt.data.Test(pos)
-
-		if isLeft && !bitActive {
-			ctr++
-		}
-		if !isLeft && bitActive {
-			ctr++
-		}
-	}
-
-	return pos
 }
 
 // Iter returns an out-channel that will contain symbols from the
