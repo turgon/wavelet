@@ -140,3 +140,16 @@ func TestResize(t *testing.T) {
 		t.Errorf("Resize to zero still has data!")
 	}
 }
+
+func TestSub(t *testing.T) {
+	bf := NewBitField(3)
+	bf.Set(0)
+	bf.Set(1)
+	nbf := bf.Sub(1, 3)
+	if !nbf.Test(0) || nbf.Test(1) {
+		t.Errorf("Sub did not properly set bits!")
+	}
+	if nbf.Len() != 2 {
+		t.Errorf("Sub has wrong length!")
+	}
+}

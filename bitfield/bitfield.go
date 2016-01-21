@@ -63,3 +63,19 @@ func (bf BitField) Resize(bits uint) BitField {
 
 	return nbf
 }
+
+func (bf BitField) Sub(left uint, right uint) BitField {
+	nbf := NewBitField(right - left)
+
+	var position uint
+
+	for i := left; i < right; i++ {
+		if bf.Test(i) {
+			nbf.Set(position)
+		}
+
+		position++
+	}
+
+	return nbf
+}
