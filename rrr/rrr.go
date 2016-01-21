@@ -1,86 +1,113 @@
 package rrr
 
 import (
+	"fmt"
 	"github.com/turgon/wavelet/bitfield"
 )
 
-// for now let's go with block size of 8 bits
-// and superblock size of 4 blocks.
-// so a superblock is 32 bits.
+// for now let's go with block size of 16 bits
+// and superblock size of 8 blocks.
+// so a superblock is 128 bits.
 
-const blockSize = 8      // bits
-const superblockSize = 16 // blocks
+// since a block is 16 bits, its class can be described using just
+// 4 bits, and there are less than 14 different combinations of bits
+// at its max of 16 choose 8, which also needs for 4 bits. this means
+// a uint8 can describe both the class and offset perfectly.
+
+const blockSize = 16     // bits
+const superblockSize = 8 // blocks
 
 type RRRPair struct {
-	// only 3 bits needed here
-	Class uint8
+	value uint8
+}
 
-	// 8 choose 4 = 70 is the max, requiring 7 bits
-	Offset uint8
+func NewRRRPair(class uint8, offset uint8) RRRPair {
+	var v uint8
+
+	v = class
+	v <<= 4
+
+	v |= offset
+
+	return RRRPair{
+		v,
+	}
+}
+
+func (rrrp RRRPair) Class() uint8 {
+	return rrrp.value >> 4
+}
+
+func (rrrp RRRPair) Offset() uint8 {
+	return rrrp.value & 15
 }
 
 type RRR struct {
 	bf          *bitfield.BitField
+	length	    uint
 	blocks      uint
 	superblocks uint
 
 	superRanks []uint64
 
-	global map[uint8][]byte
-	pairs []RRRPair
+	global map[uint8][]uint16
+	pairs  []RRRPair
 }
 
 func NewRRR(bf *bitfield.BitField) RRR {
 	// how many blocks are in this bitfield?
-	blocks := uint(bf.Len() / blockSize)
+	bl := uint(bf.Len() / blockSize)
 	if bf.Len()%blockSize > 0 {
-		blocks++
+		bl++
 	}
-	superblocks := uint(blocks / superblockSize)
-	if blocks%superblockSize > 0 {
-		superblocks++
+	sbl := uint(bl / superblockSize)
+	if bl%superblockSize > 0 {
+		sbl++
 	}
-
-	globals := make(map[uint8][]byte)
 
 	r := RRR{
 		bf,
-		blocks,
-		superblocks,
-		make([]uint64, superblocks, superblocks),
-		globals,
-		make([]RRRPair, blocks),
+		bf.Len(),
+		bl,
+		sbl,
+		make([]uint64, sbl, sbl),
+		make(map[uint8][]uint16),
+		make([]RRRPair, bl),
 	}
 
 	if bf.Len() == 0 {
 		return r
 	}
 
-	popMap := make(map[byte]uint64)
+	popMap := make(map[uint16]uint64)
 	popCnt := make(map[uint64]uint64)
+	seen := make(map[uint16]bool)
+	offsets := make(map[uint16]int)
 
-	// Build popMap, then invert it into globals
 	for _, b := range bf.Data {
-		popMap[b] = popcountByte(b)
-		if _, ok := 
-			popCnt[popMap[b]]++
+		bu := uint16(b)
+		popMap[bu] = popcount16(bu)
+		if !seen[bu] {
+			popCnt[popMap[bu]]++
+			seen[bu] = true
+		}
 	}
 	for pc, cnt := range popCnt {
-		globals[uint8(pc)] = make([]byte, cnt)
+		r.global[uint8(pc)] = make([]uint16, cnt)
 	}
 	for b, pc := range popMap {
-		globals[uint8(pc)] = append(globals[uint8(pc)], b)
+		pos := len(r.global[uint8(pc)]) - 1
+		r.global[uint8(pc)][pos] = b
+		offsets[b] = pos
 	}
 
-	var tot uint64
-	for i := uint(0); i < superblocks-1; i++ {
-		for j := uint(0); j < superblockSize; j++ {
-			loc := i * superblockSize + j
-			if loc < uint(len(bf.Data)) {
-				tot += popMap[bf.Data[loc]]
-			}
-		}
-		r.superRanks[i+1] = tot
+	for i, b := range bf.Data {
+		bu := uint16(b)
+		pc := popMap[bu]
+		cl := uint8(pc)
+		os := uint8(offsets[bu])
+		r.pairs[i] = NewRRRPair(cl, os)
+		r.superRanks[i/superblockSize] += pc
 	}
 
 	return r
@@ -92,13 +119,11 @@ func (r *RRR) Rank(x uint) (tot uint64) {
 	// superblock prior to x,
 	// plus the rank of this block up to x.
 
-	length := r.bf.Len()
-
-	if x >= length {
-		x = length - 1
+	if x >= r.length {
+		x = r.length - 1
 	}
 
-	if length == 0 {
+	if r.length == 0 {
 		return 0
 	}
 
@@ -106,16 +131,42 @@ func (r *RRR) Rank(x uint) (tot uint64) {
 
 	superblock := block / superblockSize
 
-	tot = r.superRanks[superblock]
+	fmt.Printf("Starting Rank; x = %v, r.length = %v, block = %v, superblock = %v\n", x, r.length, block, superblock)
 
-	for i := superblock * superblockSize; i < block; i++ {
-		tot += popcountByte(r.bf.Data[i])
+	// First set tot to the sum of all the preceding superblocks.
+	if superblock > 0 {
+		tot = r.superRanks[superblock]
+		fmt.Printf("Added super rank to tot, now = %v\n", tot)
 	}
+
+	// Next add the class value of all the preceding blocks within
+	// this superblock.
+	for i := superblock * superblockSize; i < block; i++ {
+		// tot += popcount16(uint16(r.bf.Data[i]))
+		tot += uint64(r.pairs[i].Class())
+		fmt.Printf("Added class of block %v to tot, now = %v\n", i, tot)
+	}
+
+	// Finally, add the popcount of this block, shifted to exclude
+	// bits after position x.
 
 	blockOffset := x % blockSize
 
-	if block != uint(len(r.bf.Data)) {
-		tot += popcountByte((r.bf.Data[block] >> (8 - blockOffset)))
+	if block != uint(len(r.pairs)) {
+		fmt.Printf("Entire RRR: %v\n", r)
+		fmt.Printf("All RRRPairs: %v\n", r.pairs)
+		fmt.Printf("RRRPair is %v\n", r.pairs[block])
+		os := r.pairs[block].Offset()
+		cl := r.pairs[block].Class()
+		fmt.Printf("class is %v\n", cl)
+		bls := r.global[cl]
+		fmt.Printf("offset is %v\n", os)
+		bl := bls[os]
+		fmt.Printf("blockOffset is %v\n", blockOffset)
+		bu := bl >> (superblockSize - blockOffset)
+		tot += popcount16(bu)
+		fmt.Printf("Added remainder of block %v = %16.16b to tot, now = %v\n", block, bu, tot)
+		// tot += popcount16((uint16(r.bf.Data[block]) >> (16 - blockOffset)))
 	}
 
 	return tot
@@ -137,4 +188,27 @@ func popcountByte(z byte) uint64 {
 	f4 := (e >> 4) & 15
 
 	return uint64(f0 + f4)
+}
+
+func popcount16(z uint16) uint64 {
+
+	b0 := z & 21845
+	b1 := (z >> 1) & 21845
+
+	c := b0 + b1
+
+	d0 := c & 13107
+	d2 := (c >> 2) & 13107
+
+	e := d0 + d2
+
+	f0 := e & 3855
+	f4 := (e >> 4) & 3855
+
+	g := f0 + f4
+
+	h0 := g & 255
+	h8 := (g >> 8) & 255
+
+	return uint64(h0 + h8)
 }
