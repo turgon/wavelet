@@ -97,6 +97,22 @@ func (bf BitField) Resize(bits uint) BitField {
 	return nbf
 }
 
+// CopyBits sets length bits that are set in source into bf, starting
+// at position start, resizing if necessary.
+func (bf BitField) CopyBits(source BitField, start uint, length uint) BitField {
+	if start + length > bf.Len() {
+		bf = bf.Resize(start + length)
+	}
+
+	for i := uint(0); i < length; i++ {
+		if source.Test(i) {
+			bf.Set(start + i)
+		}
+	}
+
+	return bf
+}
+
 func (bf BitField) Sub(left uint, right uint) BitField {
 	nbf := NewBitField(right - left)
 

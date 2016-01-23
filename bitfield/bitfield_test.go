@@ -187,3 +187,24 @@ func TestNewBitFieldFromUint64(t *testing.T) {
 		}
 	}
 }
+
+func TestCopyBits(t *testing.T) {
+	bf := NewBitField(5)
+	bf.Set(0)
+	bf.Set(2)
+
+	for i := 0; i < 2; i++ {
+		bf = bf.CopyBits(bf, bf.Len(), bf.Len())
+	}
+	for i := uint(0); i < bf.Len(); i++ {
+		if i % 5 == 0 || i % 5 == 2 {
+			if !bf.Test(i) {
+				t.Errorf("CopyBits failed to properly copy bits from source")
+			}
+		} else {
+			if bf.Test(i) {
+				t.Errorf("CopyBits failed to properly copy bits from source")
+			}
+		}
+	}
+}
