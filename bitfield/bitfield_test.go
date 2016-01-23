@@ -153,3 +153,28 @@ func TestSub(t *testing.T) {
 		t.Errorf("Sub has wrong length!")
 	}
 }
+
+func TestPopcount16(t *testing.T) {
+	for i := uint64(0); i < 65536; i++ {
+		j := popcount16(uint16(i))
+		var cnt uint64
+		for k := uint8(0); k < 16; k++ {
+			if (i >> k) & 1 > 0 {
+				cnt++
+			}
+		}
+		if j != cnt {
+			t.Errorf("popcount16 is wrong: %v = %v", j, cnt)
+		}
+	}
+}
+
+func TestBitFieldPopcount(t *testing.T) {
+	bf := NewBitField(33)
+	for i := uint(0); i < 33; i++ {
+		if bf.Popcount() != uint64(i) {
+			t.Errorf("Popcount is wrong: %v = %v", i, bf.Popcount())
+		}
+		bf.Set(i)
+	}
+}

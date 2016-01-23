@@ -79,3 +79,37 @@ func (bf BitField) Sub(left uint, right uint) BitField {
 
 	return nbf
 }
+
+// Popcount returns the number of bits set to 1 in the BitField.
+func (bf BitField) Popcount() uint64 {
+	var total uint64
+
+	for _, b := range bf.Data {
+		total += popcount16(uint16(b))
+	}
+
+	return total
+}
+
+func popcount16(z uint16) uint64 {
+
+	b0 := z & 21845
+	b1 := (z >> 1) & 21845
+
+	c := b0 + b1
+
+	d0 := c & 13107
+	d2 := (c >> 2) & 13107
+
+	e := d0 + d2
+
+	f0 := e & 3855
+	f4 := (e >> 4) & 3855
+
+	g := f0 + f4
+
+	h0 := g & 255
+	h8 := (g >> 8) & 255
+
+	return uint64(h0 + h8)
+}
