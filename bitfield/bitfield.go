@@ -23,6 +23,39 @@ func NewBitField(bits uint) BitField {
 	}
 }
 
+func NewBitFieldFromUint64(bits uint, raw uint64) BitField {
+	bf := NewBitField(bits)
+
+	// totally inefficient but good enough for now
+	for i := uint(0); i < bits; i++ {
+		if (raw >> i) & 1 > 0 {
+			bf.Set(i)
+		}
+	}
+
+	return bf
+}
+
+// Uint64 returns the first max(n, 64) bits of bf.
+func (bf BitField) Uint64(n uint) uint64 {
+	var ret uint64
+
+	if n > bf.Len() {
+		n = bf.Len()
+	}
+	if n > 64 {
+		n = 64
+	}
+
+	for i := uint(0); i < n; i++ {
+		if bf.Test(i) {
+			ret |= (1 << i)
+		}
+	}
+
+	return ret
+}
+
 // Set sets the bit at position to one.
 func (bf BitField) Set(position uint) {
 	bf.Data[position / segmentSize] |= (1 << ((segmentSize - 1) - position % segmentSize))

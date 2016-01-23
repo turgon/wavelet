@@ -178,3 +178,12 @@ func TestBitFieldPopcount(t *testing.T) {
 		bf.Set(i)
 	}
 }
+
+func TestNewBitFieldFromUint64(t *testing.T) {
+	for i := uint64(0); i < 131072; i++ {
+		bf := NewBitFieldFromUint64(17, i)
+		if i != bf.Uint64(17) {
+			t.Errorf("NewBitFieldFromUint64 of %v could not be restored", i)
+		}
+	}
+}
