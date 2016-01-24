@@ -131,6 +131,10 @@ func (bf *BitField) CopyBits(source BitField, start uint, length uint) BitField 
 }
 
 func (bf *BitField) Sub(left uint, right uint) BitField {
+	if right > bf.Len() {
+		right = bf.Len()
+	}
+
 	nbf := NewBitField(right - left)
 
 	var position uint

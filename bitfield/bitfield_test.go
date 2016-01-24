@@ -163,6 +163,11 @@ func TestSub(t *testing.T) {
 	if nbf.Len() != 2 {
 		t.Errorf("Sub has wrong length!")
 	}
+
+	nbf = bf.Sub(1, 99)
+	if nbf.Len() != 2 {
+		t.Errorf("Sub has wrong length!")
+	}
 }
 
 func TestPopcount16(t *testing.T) {
