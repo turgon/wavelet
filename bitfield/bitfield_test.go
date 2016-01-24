@@ -104,6 +104,16 @@ func TestResize(t *testing.T) {
 	bf.Set(0)
 	bf.Set(1)
 
+	bf = bf.Resize(2)
+	if !bf.Test(0) || !bf.Test(1) {
+		t.Errorf("Resize didn't preserve bits!")
+	}
+
+	bf = bf.Resize(segmentSize)
+	if !bf.Test(0) || !bf.Test(1) {
+		t.Errorf("Resize didn't preserve bits!")
+	}
+
 	bf = bf.Resize(1)
 	if !bf.Test(0) {
 		t.Errorf("Resize didn't preserve bits!")
@@ -134,10 +144,11 @@ func TestResize(t *testing.T) {
 	}
 
 	bf = NewBitField(1)
-	bf.Set(1)
+	bf.Set(0)
 	bf = bf.Resize(0)
 	if len(bf.Data) != 0 {
 		t.Errorf("Resize to zero still has data!")
+		t.Errorf("%v", bf)
 	}
 }
 
@@ -186,6 +197,16 @@ func TestNewBitFieldFromUint64(t *testing.T) {
 			t.Errorf("NewBitFieldFromUint64 of %v could not be restored", i)
 		}
 	}
+
+	bf := NewBitField(100)
+	bf.Set(0)
+	bf.Set(65)
+	if bf.Uint64(65) != 1 {
+		t.Errorf("Uint64 failed to limit n to 64 bits")
+	}
+	if bf.Uint64(1000) != 1 {
+		t.Errorf("Uint64 failed to limit n to 64 bits")
+	}
 }
 
 func TestCopyBits(t *testing.T) {
@@ -193,8 +214,13 @@ func TestCopyBits(t *testing.T) {
 	bf.Set(0)
 	bf.Set(2)
 
+	length := bf.Len()
 	for i := 0; i < 2; i++ {
+		length *= 2
 		bf = bf.CopyBits(bf, bf.Len(), bf.Len())
+	}
+	if length != bf.Len() {
+		t.Errorf("CopyBits left us with the wrong bitlength")
 	}
 	for i := uint(0); i < bf.Len(); i++ {
 		if i % 5 == 0 || i % 5 == 2 {

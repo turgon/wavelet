@@ -37,7 +37,7 @@ func NewBitFieldFromUint64(bits uint, raw uint64) BitField {
 }
 
 // Uint64 returns the first max(n, 64) bits of bf.
-func (bf BitField) Uint64(n uint) uint64 {
+func (bf *BitField) Uint64(n uint) uint64 {
 	var ret uint64
 
 	if n > bf.Len() {
@@ -57,32 +57,47 @@ func (bf BitField) Uint64(n uint) uint64 {
 }
 
 // Set sets the bit at position to one.
-func (bf BitField) Set(position uint) {
+func (bf *BitField) Set(position uint) {
 	bf.Data[position / segmentSize] |= (1 << ((segmentSize - 1) - position % segmentSize))
 }
 
 // Unset sets the bit at position to zero.
-func (bf BitField) Unset(position uint) {
+func (bf *BitField) Unset(position uint) {
 	bf.Data[position / segmentSize] &^= (1 << ((segmentSize - 1) - position % segmentSize))
 }
 
 // Test returns true if the bit at position is set.
-func (bf BitField) Test(position uint) bool {
+func (bf *BitField) Test(position uint) bool {
 	return (bf.Data[position / segmentSize] & (1 << ((segmentSize - 1) - position % segmentSize))) != 0
 }
 
 // Len returns the number of bits in the bitfield.
-func (bf BitField) Len() uint {
+func (bf *BitField) Len() uint {
 	return bf.length
 }
 
 // Resize returns a new BitField with new size and a copy of the
 // original data. If the new copy is larger than the original, it
 // will be padded with 0-bits. If smaller, bits are truncated.
-func (bf BitField) Resize(bits uint) BitField {
+func (bf *BitField) Resize(bits uint) BitField {
 	nbf := NewBitField(bits)
 
-	copy(nbf.Data, bf.Data)
+	if bits == 0 {
+		return nbf
+	}
+
+	if bits < bf.length {
+		nbf.Data = bf.Data[:len(nbf.Data)]
+	}
+
+	if bits == bf.length {
+		nbf.Data = bf.Data
+	}
+
+	if bits > bf.length {
+		empty := make([]segment, len(nbf.Data) - len(bf.Data))
+		nbf.Data = append(bf.Data, empty...)
+	}
 
 	if nbf.Len() % segmentSize == 0 {
 		return nbf
@@ -99,21 +114,23 @@ func (bf BitField) Resize(bits uint) BitField {
 
 // CopyBits sets length bits that are set in source into bf, starting
 // at position start, resizing if necessary.
-func (bf BitField) CopyBits(source BitField, start uint, length uint) BitField {
+func (bf *BitField) CopyBits(source BitField, start uint, length uint) BitField {
+	xbf := *bf
+
 	if start + length > bf.Len() {
-		bf = bf.Resize(start + length)
+		xbf = bf.Resize(start + length)
 	}
 
 	for i := uint(0); i < length; i++ {
 		if source.Test(i) {
-			bf.Set(start + i)
+			xbf.Set(start + i)
 		}
 	}
 
-	return bf
+	return xbf
 }
 
-func (bf BitField) Sub(left uint, right uint) BitField {
+func (bf *BitField) Sub(left uint, right uint) BitField {
 	nbf := NewBitField(right - left)
 
 	var position uint
@@ -130,7 +147,7 @@ func (bf BitField) Sub(left uint, right uint) BitField {
 }
 
 // Popcount returns the number of bits set to 1 in the BitField.
-func (bf BitField) Popcount() uint64 {
+func (bf *BitField) Popcount() uint64 {
 	var total uint64
 
 	for _, b := range bf.Data {
