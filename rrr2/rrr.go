@@ -15,10 +15,10 @@ type RRRField struct {
 
 	superRanks uint64
 
-	classBits uint8
-	offsetBits uint8
+	classBits uint
+	offsetBits uint
 
-	stepBits uint8
+	stepBits uint
 
 	lastBlockLen uint
 
@@ -27,27 +27,27 @@ type RRRField struct {
 
 // Class fetches the class of the block at the given position.
 func (r RRRField) Class(block uint) uint64 {
-	start := uint(r.stepBits) * block
-	end := start + uint(r.classBits)
+	start := r.stepBits * block
+	end := start + r.classBits
 
 	bf := r.Sub(start, end)
-	return bf.Uint64(uint(r.classBits))
+	return bf.Uint64(r.classBits)
 }
 
 // Offset fetches the offset of the block at the given position.
 func (r RRRField) Offset(block uint) uint64 {
-	start := uint(r.stepBits) * block + uint(r.classBits)
-	end := start + uint(r.offsetBits)
+	start := r.stepBits * block + r.classBits
+	end := start + r.offsetBits
 
 	bf := r.Sub(start, end)
 
-	return bf.Uint64(uint(r.offsetBits))
+	return bf.Uint64(r.offsetBits)
 }
 
 func (r RRRField) Block(block uint) bitfield.BitField {
 	b := r.global[r.Class(block)][r.Offset(block)]
 
-	if block == r.Len() / uint(r.stepBits) - 1 {
+	if block == r.Len() / r.stepBits - 1 {
 		b = b.Resize(r.lastBlockLen)
 	}
 
@@ -64,7 +64,7 @@ func NewRRRField(bf *bitfield.BitField, blockSize uint, superSize uint) RRRField
 	r.superSize = superSize
 
 	r.classBits = needBits(uint64(blockSize + 1))
-	r.offsetBits = bitsForLargest(uint8(blockSize))
+	r.offsetBits = bitsForLargest(blockSize)
 
 	r.stepBits = r.classBits + r.offsetBits
 
@@ -82,8 +82,8 @@ func NewRRRField(bf *bitfield.BitField, blockSize uint, superSize uint) RRRField
 		// create a bitfield consisting of the number of
 		// bits necessary to describe any class, and set
 		// it to this class.
-		cf := bitfield.NewBitFieldFromUint64(uint(r.classBits), subpc)
-		r.BitField = r.CopyBits(cf, uint(r.stepBits) * (i / blockSize), cf.Len())
+		cf := bitfield.NewBitFieldFromUint64(r.classBits, subpc)
+		r.BitField = r.CopyBits(cf, r.stepBits * (i / blockSize), cf.Len())
 
 		if _, ok := offMap[subpc]; !ok {
 			offMap[subpc] = make(map[uint64]uint64)
@@ -104,8 +104,8 @@ func NewRRRField(bf *bitfield.BitField, blockSize uint, superSize uint) RRRField
 		}
 
 
-		of := bitfield.NewBitFieldFromUint64(uint(r.offsetBits), offset)
-		r.BitField = r.CopyBits(of, uint(r.stepBits) * (i / blockSize) + uint(r.classBits), of.Len())
+		of := bitfield.NewBitFieldFromUint64(r.offsetBits, offset)
+		r.BitField = r.CopyBits(of, r.stepBits * (i / blockSize) + r.classBits, of.Len())
 	}
 
 	return r
@@ -113,8 +113,8 @@ func NewRRRField(bf *bitfield.BitField, blockSize uint, superSize uint) RRRField
 
 // needBits takes a number x and returns the number of bits needed
 // to store the range [0, x).
-func needBits(x uint64) uint8 {
-	return uint8(math.Ceil(math.Log2(float64(x))))
+func needBits(x uint64) uint {
+	return uint(math.Ceil(math.Log2(float64(x))))
 }
 
 // bitsForLargest takes a number n of RRR classes, figures out the
@@ -122,7 +122,7 @@ func needBits(x uint64) uint8 {
 // to enumerate that class. For example, given 8 classes, the largest
 // class has 8/2 = 4 bits set with (8 choose 4) = 70 permutations.
 // Thus, bitsForLargest(8) = ceiling(log2(70)) = 7 bits.
-func bitsForLargest(n uint8) uint8 {
+func bitsForLargest(n uint) uint {
 
 	if n > 64 {
 		panic("bitForLargest: n can't exceed 64")

@@ -32,7 +32,7 @@ func TestNewRRRField(t *testing.T) {
 }
 
 func TestNeedBits(t *testing.T) {
-	var j uint8
+	var j uint
 	for i := uint64(2); i < 128; i *= 2 {
 		j++
 		if j != needBits(i) {
@@ -42,7 +42,7 @@ func TestNeedBits(t *testing.T) {
 }
 
 func TestBitsForLargest(t *testing.T) {
-	var b uint8
+	var b uint
 
 	b = bitsForLargest(8)
 	if b != 7 {
