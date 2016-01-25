@@ -114,4 +114,33 @@ func TestRRRFieldBlock(t *testing.T) {
 			t.Errorf("Rebuilt bitfield doesn't match at position %v", i)
 		}
 	}
+
+	// Again, this time with a repeating pattern of 011 011 bits
+	bf = bitfield.NewBitField(16)
+
+	bf.Set(1)
+	bf.Set(2)
+	bf.Set(4)
+	bf.Set(5)
+	bf.Set(6)
+	bf.Set(7)
+
+	r = NewRRRField(&bf, 3, 1)
+
+	bf2 = bitfield.NewBitField(16)
+
+	for i := uint(0); i < r.Len() / uint(r.stepBits); i++ {
+		b := r.Block(i)
+		bf2 = bf2.CopyBits(b, i * r.blockSize, b.Len())
+	}
+
+	if bf.Len() != bf2.Len() {
+		t.Fatalf("Rebuilt bitfield lengths don't match")
+	}
+
+	for i := uint(0); i < bf.Len(); i++ {
+		if bf.Test(i) != bf2.Test(i) {
+			t.Errorf("Rebuilt bitfield doesn't match at position %v", i)
+		}
+	}
 }

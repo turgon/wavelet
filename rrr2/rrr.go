@@ -97,12 +97,12 @@ func NewRRRField(bf *bitfield.BitField, blockSize uint, superSize uint) RRRField
 		if os, ok := offMap[subpc][subval]; !ok {
 			offMap[subpc][subval] = offMax[subpc]
 			offset = offMax[subpc]
+			r.global[subpc] = append(r.global[subpc], sub)
 			offMax[subpc]++
 		} else {
 			offset = os
 		}
 
-		r.global[subpc] = append(r.global[subpc], sub)
 
 		of := bitfield.NewBitFieldFromUint64(uint(r.offsetBits), offset)
 		r.BitField = r.CopyBits(of, uint(r.stepBits) * (i / blockSize) + uint(r.classBits), of.Len())
